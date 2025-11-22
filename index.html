@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TITRE MIS À JOUR POUR NETLIFY -->
+    <title>Barclays Banque - Espace Client</title>
+    <!-- Inclure Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuration des polices et des classes personnalisées pour Tailwind -->
+    <style>
+        .font-sans {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .font-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        /* Style de base pour les transitions */
+        .animate-in {
+            animation-name: fadeIn;
+            animation-duration: 0.3s;
+            animation-fill-mode: both;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .slide-in-from-top-4 {
+            animation-name: slideInTop;
+        }
+        @keyframes slideInTop {
+            from { transform: translateY(-1rem); }
+            to { transform: translateY(0); }
+        }
+        .slide-in-from-bottom-4 {
+            animation-name: slideInBottom;
+        }
+        @keyframes slideInBottom {
+            from { transform: translateY(1rem); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .zoom-in-95 {
+            animation-name: zoomIn;
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        /* Simulation de l'icône de Contactless */
+        .contactless-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Fix pour les écrans mobiles pour que la nav n'obstrue pas le contenu */
+        @media (max-width: 767px) {
+            .main-content {
+                padding-bottom: 70px; /* Espace pour la barre de navigation inférieure */
+            }
+        }
+        
+        /* Loading spinner for the transfer */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Inclure React et ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Inclure Babel pour la compilation JSX dans le navigateur -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ==========================================
+        // SIMULATION DES ICONES LUCIDE-REACT
+        // ==========================================
+        const Bell = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.8 12.3a4.5 4.5 0 0 0-4.5-4.5H9.7a4.5 4.5 0 0 0-4.5 4.5v1.2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1.2zm-4.3 8a2 2 0 0 1-4 0"/></svg>;
+        const LogOut = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+        const Home = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+        const ArrowRightLeft = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 11 20 14 17 17"/><line x1="4" y1="14" x2="20" y2="14"/><polyline points="7 7 4 10 7 13"/><line x1="20" y1="10" x2="4" y2="10"/></svg>;
+        const CreditCard = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>;
+        const X = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+        const Landmark = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><path d="M4 14.897V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10.897M12 2l4 3.5M12 2l-4 3.5M9 8h6M6 18h12"/></svg>;
+        const CheckCircle = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const Settings = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1 0-2.73l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const TrendingUp = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>;
+
+
+        // ==========================================
+        // DONNÉES FICTIVES INITIALES
+        // ==========================================
+        
+        const INITIAL_DATA = {
+            bankName: "BARCLAYS",
+            user: {
+                name: "Bernard WAnesse",
+                loginId: "7897620168",
+                password: "548521"
+            },
+            // Solde initial
+            initialBalance: 243500, 
+            initialTransactions: [
+                // Transfert de placements (Crédit, ID le plus bas pour être en dernière position)
+                { id: 1, date: '15/10/2025', recipient: 'Blockchain', account: '********', amount: 243500, type: 'credit', description: 'Transfert de placements (Ancien)' },
+                // Crédits (montants positifs) - IDs incrémentés pour simuler des transactions plus récentes
+                { id: 2, date: '27/10/2025', recipient: 'Wilfried Ebo', account: '******5 2543', amount: 1200, type: 'credit', description: 'Transaction intérieure' },
+                { id: 3, date: '04/11/2025', recipient: 'Wilfried Ebo', account: '******5 2543', amount: 1400, type: 'credit', description: 'Transaction intérieure' },
+                { id: 4, date: '13/11/2025', recipient: 'Mathias Thibaut', account: '******2 2782', amount: 3000, type: 'credit', description: 'Transaction intérieure' },
+            ],
+            notificationMessage: "243 500 euros ont été générés à la suite de placements effectués sur les marchés. En l’absence d’une infrastructure de gestion d’actifs numériques dédiée, les produits financiers ont été provisoirement centralisés auprès de la banque Barclays, avant d’être transférés sur votre compte."
+        };
+
+        const formatCurrency = (amount) => {
+            // Utiliser Math.abs pour s'assurer que l'affichage du montant est correct pour le formatteur
+            const displayAmount = Math.abs(amount);
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(displayAmount);
+        };
+
+        // Fonction pour formater/crypter le numéro de carte
+        const formatCardNumber = (number) => {
+            // Simuler un numéro de carte crypté
+            const visible = number.slice(-4);
+            const hidden = '•••• •••• •••• ';
+            return hidden + visible;
+        };
+
+        // ==========================================
+        // SOUS-COMPOSANTS
+        // ==========================================
+        
+        // Composant Notification de Succès
+        function SuccessToast({ message, onClose }) {
+            React.useEffect(() => {
+                const timer = setTimeout(() => {
+                    onClose();
+                }, 4000); // Disparaît après 4 secondes
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            return (
+                <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center gap-3 bg-green-600 text-white p-4 rounded-xl shadow-2xl shadow-green-600/30">
+                        <CheckCircle className="w-6 h-6" />
+                        <span className="font-medium">{message}</span>
+                        <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10 ml-2">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
+        function LoginPage({ onLoginSuccess, correctLogin, bankName }) {
+            // ... (code de LoginPage inchangé)
+            const [loginId, setLoginId] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [error, setError] = React.useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (loginId === correctLogin.loginId && password === correctLogin.password) {
+                    onLoginSuccess();
+                } else {
+                    setError("Identifiants incorrects. Veuillez réessayer.");
+                }
+            };
+
+            return (
+                <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-sky-100 to-white p-4">
+                    <div className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden">
+                        <div className="bg-sky-500 p-6 text-center">
+                            <div className="inline-block p-3 rounded-full bg-white/20 mb-2">
+                                <Landmark className="text-white w-8 h-8" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-white tracking-wider">{bankName}</h1>
+                            <p className="text-sky-100 text-sm mt-1">Accès Sécurisé</p>
+                        </div>
+                        
+                        <div className="p-8">
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 mb-1">Identifiant</label>
+                                    <input 
+                                        type="text" 
+                                        value={loginId} 
+                                        onChange={(e) => setLoginId(e.target.value)} 
+                                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all bg-slate-50 focus:bg-white"
+                                        placeholder="Entrez votre identifiant"
+                                        required 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 mb-1">Mot de passe</label>
+                                    <input 
+                                        type="password" 
+                                        value={password} 
+                                        onChange={(e) => setPassword(e.target.value)} 
+                                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition-all bg-slate-50 focus:bg-white"
+                                        placeholder="••••••"
+                                        required 
+                                    />
+                                </div>
+                                
+                                {error && (
+                                    <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-center">
+                                        <span className="mr-2">⚠️</span> {error}
+                                    </div>
+                                )}
+
+                                <button type="submit" className="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-sky-500/30 transition-all transform active:scale-[0.98]">
+                                    Se connecter
+                                </button>
+                                
+                                <div className="text-center mt-4">
+                                    <p className="text-xs text-slate-400">ID: {correctLogin.loginId} | MDP: {correctLogin.password}</p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Header({ userName, bankName, onLogout, onToggleNotification, notificationActive }) {
+            // ... (code de Header inchangé)
+            return (
+                <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-3 md:px-6 flex justify-between items-center shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-sky-500 p-1.5 rounded-lg">
+                            <Landmark className="text-white w-5 h-5" />
+                        </div>
+                        <span className="font-bold text-xl text-sky-600 tracking-tight">{bankName}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 md:gap-6">
+                        <span className="hidden md:block text-sm font-medium text-slate-600">
+                            Bonjour, <span className="text-slate-900 font-bold">{userName}</span>
+                        </span>
+                        
+                        <button 
+                            onClick={onToggleNotification}
+                            className={`relative p-2 rounded-full transition-colors ${notificationActive ? 'bg-sky-50 text-sky-600' : 'hover:bg-slate-100 text-slate-500'}`}
+                        >
+                            <Bell className="w-5 h-5" />
+                            {notificationActive && (
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                            )}
+                        </button>
+                        
+                        <button 
+                            onClick={onLogout} 
+                            className="flex items-center gap-2 text-slate-500 hover:text-red-500 transition-colors text-sm font-medium"
+                        >
+                            <span className="hidden md:inline">Déconnexion</span>
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                </header>
+            );
+        }
+
+        function NotificationPanel({ message, onClose }) {
+            // ... (code de NotificationPanel inchangé)
+            return (
+                <div className="absolute top-16 right-4 md:right-6 z-30 w-full max-w-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="bg-white rounded-xl shadow-xl border border-sky-100 overflow-hidden">
+                        <div className="bg-sky-500 px-4 py-3 flex justify-between items-center">
+                            <h3 className="text-white font-medium text-sm flex items-center gap-2">
+                                <Bell className="w-4 h-4" /> Information Importante
+                            </h3>
+                            <button onClick={onClose} className="text-white/80 hover:text-white">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="p-4 bg-sky-50/50">
+                            <p className="text-sm text-slate-700 leading-relaxed">{message}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Navigation({ currentView, setCurrentView }) {
+            const navItems = [
+                { id: 'dashboard', label: 'Tableau de bord', icon: Home },
+                { id: 'transfer', label: 'Virement', icon: ArrowRightLeft },
+                { id: 'card', label: 'Carte', icon: CreditCard },
+                { id: 'loan', label: 'Prêt', icon: TrendingUp }, // Nouveau bouton Prêt
+                { id: 'settings', label: 'Réglage', icon: Settings }, // Nouveau bouton Réglage
+            ];
+
+            return (
+                <nav className="md:w-64 bg-white border-r border-slate-200 flex md:flex-col justify-around md:justify-start fixed bottom-0 w-full md:relative md:h-auto z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:shadow-none p-2 md:p-4 gap-1 md:gap-2">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentView === item.id;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => setCurrentView(item.id)}
+                                className={`flex flex-col md:flex-row items-center md:gap-3 p-2 md:px-4 md:py-3 rounded-lg transition-all w-full md:text-left text-xs md:text-sm font-medium
+                                    ${isActive 
+                                        ? 'text-sky-600 bg-sky-50 md:bg-sky-50' 
+                                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            >
+                                <Icon className={`w-6 h-6 md:w-5 md:h-5 mb-1 md:mb-0 ${isActive ? 'stroke-[2.5px]' : ''}`} />
+                                <span>{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </nav>
+            );
+        }
+
+        function DashboardView({ balance, transactions }) {
+            // ... (code de DashboardView inchangé)
+            return (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                    {/* Balance Card */}
+                    <div className="bg-gradient-to-r from-sky-500 to-sky-600 rounded-2xl p-6 text-white shadow-lg shadow-sky-500/20 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-32 blur-2xl"></div>
+                        <div className="relative z-10">
+                            <h2 className="text-sky-100 text-sm font-medium mb-1">Solde disponible</h2>
+                            <p className="text-4xl font-bold mb-4">{formatCurrency(balance)}</p>
+                            <div className="flex items-center justify-between bg-white/10 rounded-lg p-3 backdrop-blur-sm">
+                                <div>
+                                    <p className="text-xs text-sky-100">IBAN</p>
+                                    <p className="font-mono text-sm">FR76 BARC 2000 1000 1234 5678 901</p>
+                                </div>
+                                <CreditCard className="w-6 h-6 text-sky-200" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Transactions */}
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-semibold text-slate-700">Historique des transactions</h3>
+                            <span className="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-1 rounded-full">Ce mois</span>
+                        </div>
+                        <ul className="divide-y divide-slate-100">
+                            {/* Assurez-vous que l'historique est trié du plus récent (ID le plus élevé) au plus ancien */}
+                            {transactions.sort((a, b) => b.id - a.id).map(tx => {
+                                // Déterminer si c'est un débit (montant négatif) ou un crédit (montant positif)
+                                // Note : Avec les nouvelles données, toutes les transactions initiales sont des crédits.
+                                // Seuls les nouveaux virements seront des débits.
+                                const isCredit = tx.amount >= 0 && tx.type === 'credit';
+                                const isDebit = tx.amount < 0 && tx.type === 'debit';
+                                
+                                return (
+                                    <li key={tx.id} className="px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                                        <div className="flex items-start gap-4">
+                                            {/* Crédit : Vert / Débit : Rouge */}
+                                            <div className={`p-2 rounded-full ${isCredit ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                {/* Flèche entrante pour crédit, flèche sortante pour débit */}
+                                                <ArrowRightLeft className={`w-5 h-5 ${isCredit ? 'rotate-180' : ''}`} />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-900">{tx.recipient}</p>
+                                                <p className="text-sm text-slate-500 font-mono">{tx.account}</p>
+                                                {/* Afficher la description pour les transactions intérieures */}
+                                                {tx.description && <p className="text-xs text-slate-400 mt-0.5 italic">{tx.description}</p>} 
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            {/* Afficher le signe - ou + et la couleur appropriée */}
+                                            <p className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                                                {isCredit ? '+' : '-'} {formatCurrency(tx.amount)}
+                                            </p>
+                                            <p className="text-xs text-slate-400">{tx.date}</p>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                        {transactions.length === 0 && (
+                            <div className="text-center p-8 text-slate-500 italic">
+                                Aucune transaction récente.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function TransferView({ onTransfer }) {
+            const [formData, setFormData] = React.useState({
+                name: '',
+                iban: '',
+                amount: '',
+                description: ''
+            });
+            const [message, setMessage] = React.useState(null);
+            // État pour gérer le chargement 
+            const [isLoading, setIsLoading] = React.useState(false); 
+
+            const handleChange = (e) => {
+                const value = e.target.name === 'amount' 
+                              ? Math.abs(parseFloat(e.target.value) || 0) // S'assurer que le montant dans le champ est toujours positif
+                              : e.target.value;
+                setFormData({ ...formData, [e.target.name]: value });
+                setMessage(null); 
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                const amountNum = parseFloat(formData.amount);
+
+                if(isLoading) return; // Empêcher les soumissions multiples
+                
+                if(!formData.name || !formData.iban || !formData.amount || amountNum <= 0) {
+                    setMessage({ type: 'error', text: "Veuillez remplir correctement tous les champs obligatoires (le montant doit être supérieur à zéro)." });
+                    return;
+                }
+
+                setIsLoading(true);
+                // Pas de message d'information visible, juste le spinner sur le bouton
+
+                // Simuler le délai de 3 secondes
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Appel de la fonction de virement
+                const result = onTransfer({ ...formData, amount: amountNum }); 
+                
+                setIsLoading(false); // Arrêter le chargement
+                
+                if(result.success) {
+                    setFormData({ name: '', iban: '', amount: '', description: '' });
+                    // Le message de succès est géré par le Toast dans le composant principal
+                } else {
+                    setMessage({ type: 'error', text: result.message });
+                }
+            };
+
+            return (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <ArrowRightLeft className="text-sky-500" /> Nouveau virement
+                        </h2>
+                        <p className="text-slate-500 text-sm">Remplissez les informations du bénéficiaire ci-dessous.</p>
+                    </div>
+
+                    {/* Affichage des messages d'erreur */}
+                    {message && message.type === 'error' && (
+                        <div className={`mb-6 p-4 rounded-lg text-sm bg-red-50 text-red-600 border border-red-200`}>
+                            {message.text}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="grid md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">Nom du bénéficiaire *</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                                    required 
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">IBAN du bénéficiaire *</label>
+                                <input 
+                                    type="text" 
+                                    name="iban" 
+                                    value={formData.iban} 
+                                    onChange={handleChange} 
+                                    placeholder="FR76...." 
+                                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                                    required 
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Montant (€) *</label>
+                            <div className="relative">
+                                <input 
+                                    type="number" 
+                                    name="amount" 
+                                    value={formData.amount} 
+                                    onChange={handleChange} 
+                                    min="0.01" 
+                                    step="0.01" 
+                                    className="w-full pl-4 pr-12 py-3 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all text-lg font-medium text-slate-900"
+                                    required 
+                                    disabled={isLoading}
+                                />
+                                <span className="absolute right-4 top-3.5 text-slate-400 font-bold">EUR</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Description (Optionnel)</label>
+                            <input 
+                                type="text" 
+                                name="description" 
+                                value={formData.description} 
+                                onChange={handleChange} 
+                                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none transition-all"
+                                disabled={isLoading}
+                            />
+                        </div>
+
+                        <div className="pt-4">
+                            <button 
+                                type="submit" 
+                                // Le bouton est désactivé si isLoading est true
+                                className="w-full md:w-auto bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-sky-500/20 transition-all transform active:scale-[0.98] disabled:bg-sky-400 disabled:shadow-none flex items-center justify-center gap-3"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <div className="spinner"></div>
+                                        <span>Traitement...</span>
+                                    </>
+                                ) : (
+                                    <span>Valider le virement</span>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            );
+        }
+
+        function CardView({ userName }) {
+            const cardNumber = "4970102345678910";
+            const encryptedCardNumber = formatCardNumber(cardNumber); // Utilisation de la fonction de formatage/cryptage
+
+            return (
+                <div className="animate-in fade-in zoom-in-95 duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 mb-6">Votre Carte Bancaire</h2>
+                    
+                    <div className="flex flex-col items-center">
+                        {/* Realistic CSS Card */}
+                        <div className="w-full max-w-[380px] aspect-[1.586] rounded-2xl p-6 relative text-white shadow-2xl overflow-hidden transform transition-transform hover:scale-105 duration-300 group">
+                            {/* Background Gradient */}
+                            <div className="absolute inset-0 bg-gradient-to-bl from-[#2c3e50] to-[#000000] z-0"></div>
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 z-0"></div>
+                            
+                            {/* Abstract Shapes */}
+                            <div className="absolute -top-20 -right-20 w-60 h-60 bg-sky-500 rounded-full blur-[60px] opacity-40"></div>
+                            <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500 rounded-full blur-[50px] opacity-30"></div>
+
+                            <div className="relative z-10 h-full flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    {/* Chip */}
+                                    <div className="w-12 h-9 bg-gradient-to-br from-yellow-200 to-yellow-500 rounded-md border border-yellow-600/50 flex items-center justify-center overflow-hidden relative shadow-sm">
+                                        <div className="absolute w-full h-[1px] bg-yellow-800/40 top-1/3"></div>
+                                        <div className="absolute w-full h-[1px] bg-yellow-800/40 bottom-1/3"></div>
+                                        <div className="absolute h-full w-[1px] bg-yellow-800/40 left-1/3"></div>
+                                        <div className="absolute h-full w-[1px] bg-yellow-800/40 right-1/3"></div>
+                                        <div className="w-4 h-4 border border-yellow-800/40 rounded-sm"></div>
+                                    </div>
+                                    {/* Contactless Symbol - Simulated with SVG from the original code */}
+                                    <svg className="w-6 h-6 opacity-80 contactless-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                                    </svg>
+                                </div>
+
+                                <div className="mt-4">
+                                    {/* Numéro de carte crypté */}
+                                    <div className="text-xl md:text-2xl font-mono tracking-widest drop-shadow-md">
+                                        {encryptedCardNumber}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-end mt-auto">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase text-slate-300 tracking-wider mb-0.5">Titulaire</span>
+                                        <span className="font-medium tracking-wide uppercase text-sm md:text-base truncate max-w-[200px]">{userName}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center mr-4">
+                                        <span className="text-[8px] uppercase text-slate-300">Expires</span>
+                                        <span className="font-mono text-sm">11/28</span>
+                                    </div>
+                                    <div className="italic font-bold text-2xl tracking-tighter leading-none">
+                                        VISA
+                                        <span className="block text-[8px] not-italic font-normal tracking-normal text-right">Premium</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full max-w-md">
+                            <h3 className="font-semibold text-slate-800 mb-4">Détails de la carte</h3>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex justify-between py-2 border-b border-slate-100">
+                                    <span className="text-slate-500">Statut</span>
+                                    <span className="text-green-600 font-medium flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-green-500"></span> Active
+                                    </span>
+                                </div>
+                                <div className="flex justify-between py-2 border-b border-slate-100">
+                                    <span className="text-slate-500">Type</span>
+                                    <span className="text-slate-800">Débit immédiat</span>
+                                </div>
+                                <div className="flex justify-between py-2 border-b border-slate-100">
+                                    <span className="text-slate-500">Plafond hebdomadaire</span>
+                                    <span className="text-slate-800 font-mono">5 000,00 €</span>
+                                </div>
+                                <div className="flex justify-between py-2">
+                                    <span className="text-slate-500">Sans contact</span>
+                                    <span className="text-slate-800">Activé</span>
+                                </div>
+                            </div>
+                            <button className="mt-6 w-full py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+                                Faire opposition
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Nouvelle vue pour le service de Prêt
+        function LoanView() {
+            return (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 animate-in fade-in zoom-in-95 duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <TrendingUp className="text-sky-500" /> Nos Services de Prêt
+                    </h2>
+                    <p className="text-slate-500 mb-6">Financez vos projets avec nos solutions de financement flexibles et avantageuses.</p>
+                    
+                    <div className="space-y-4">
+                        <div className="p-4 bg-sky-50 rounded-lg border border-sky-100">
+                            <h3 className="font-semibold text-sky-800">Prêt Immobilier</h3>
+                            <p className="text-sm text-sky-700">Taux compétitifs pour l'achat de votre résidence principale ou secondaire.</p>
+                        </div>
+                        <div className="p-4 bg-sky-50 rounded-lg border border-sky-100">
+                            <h3 className="font-semibold text-sky-800">Prêt Auto/Moto</h3>
+                            <p className="text-sm text-sky-700">Obtenez un financement rapide pour votre nouveau véhicule.</p>
+                        </div>
+                        <div className="p-4 bg-sky-50 rounded-lg border border-sky-100">
+                            <h3 className="font-semibold text-sky-800">Prêt Personnel</h3>
+                            <p className="text-sm text-sky-700">Libre utilisation, pour tous vos besoins de trésorerie.</p>
+                        </div>
+                    </div>
+                    
+                    <button className="mt-8 w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg shadow-sky-500/30 transition-all">
+                        Faire une simulation de prêt
+                    </button>
+                </div>
+            );
+        }
+
+        // Nouvelle vue pour le service de Réglage
+        function SettingsView() {
+            return (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 animate-in fade-in zoom-in-95 duration-300">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Settings className="text-sky-500" /> Réglages et Préférences
+                    </h2>
+                    <p className="text-slate-500 mb-6">Gérez votre compte, vos notifications et vos paramètres de sécurité.</p>
+                    
+                    <div className="space-y-6">
+                        <div className="border border-slate-100 rounded-lg p-4">
+                            <h3 className="font-semibold text-slate-800 mb-2">Sécurité</h3>
+                            <ul className="text-sm space-y-2">
+                                <li className="flex justify-between items-center py-1">
+                                    <span className="text-slate-700">Changer le mot de passe</span>
+                                    <span className="text-sky-500 cursor-pointer hover:text-sky-700">Gérer</span>
+                                </li>
+                                <li className="flex justify-between items-center py-1">
+                                    <span className="text-slate-700">Authentification à deux facteurs</span>
+                                    <span className="text-green-500">Activée</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div className="border border-slate-100 rounded-lg p-4">
+                            <h3 className="font-semibold text-slate-800 mb-2">Notifications</h3>
+                            <ul className="text-sm space-y-2">
+                                <li className="flex justify-between items-center py-1">
+                                    <span className="text-slate-700">Alertes par e-mail</span>
+                                    <span className="text-red-500">Désactivées</span>
+                                </li>
+                                <li className="flex justify-between items-center py-1">
+                                    <span className="text-slate-700">Notifications Push</span>
+                                    <span className="text-green-500">Activées</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // COMPOSANT PRINCIPAL APP
+        // ==========================================
+        function App() {
+            const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+            
+            // --- LOGIQUE DE PERSISTANCE ---
+            const [balance, setBalance] = React.useState(() => {
+                if (typeof window !== 'undefined') {
+                    const savedBalance = localStorage.getItem('barclays_balance');
+                    // G-A-R-D-E-R L-E S-O-L-D-E I-N-T-A-C-T comme demandé
+                    return savedBalance ? parseFloat(savedBalance) : INITIAL_DATA.initialBalance;
+                }
+                return INITIAL_DATA.initialBalance;
+            });
+
+            const [transactions, setTransactions] = React.useState(() => {
+                if (typeof window !== 'undefined') {
+                    const savedTransactions = localStorage.getItem('barclays_transactions');
+                    try {
+                        const parsed = JSON.parse(savedTransactions);
+                        // S'assurer que c'est un tableau, sinon retourner les données initiales
+                        return Array.isArray(parsed) ? parsed : INITIAL_DATA.initialTransactions;
+                    } catch (e) {
+                        console.error("Erreur de parsing des transactions de localStorage:", e);
+                        return INITIAL_DATA.initialTransactions;
+                    }
+                }
+                return INITIAL_DATA.initialTransactions;
+            });
+
+            const [currentView, setCurrentView] = React.useState('dashboard');
+            const [showNotification, setShowNotification] = React.useState(false);
+            // État pour la notification de succès du virement
+            const [showSuccessToast, setShowSuccessToast] = React.useState(false);
+
+            // Sauvegarde automatique dans localStorage à chaque modification
+            React.useEffect(() => {
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('barclays_balance', balance.toString());
+                    localStorage.setItem('barclays_transactions', JSON.stringify(transactions));
+                }
+            }, [balance, transactions]);
+
+            // Quand la connexion réussit, on passe à l'état "connecté"
+            const handleLoginSuccess = () => {
+                setIsLoggedIn(true);
+                setCurrentView('dashboard');
+            };
+
+            // Quand on se déconnecte, on repasse à la page de connexion
+            const handleLogout = () => {
+                setIsLoggedIn(false);
+                setShowNotification(false);
+                setShowSuccessToast(false);
+                setCurrentView('dashboard');
+            };
+
+            // Logique de virement
+            const handleTransfer = (transferData) => {
+                const amountNum = parseFloat(transferData.amount);
+                
+                // Si le solde est insuffisant pour un virement (débit)
+                if (balance - amountNum < 0) {
+                    return { success: false, message: "Solde insuffisant pour effectuer ce virement." };
+                }
+
+                // Le virement est un DEBIT, donc le montant de la transaction doit être négatif.
+                const newTransaction = {
+                    // ID très élevé pour être la transaction la plus récente
+                    id: Date.now(), 
+                    date: new Date().toLocaleDateString('fr-FR'),
+                    recipient: transferData.name,
+                    account: `******${transferData.iban.slice(-4)}`,
+                    amount: -amountNum, 
+                    type: 'debit', // Un virement standard est un débit
+                    description: transferData.description || 'Virement sortant'
+                };
+
+                // Mettre à jour la balance et les transactions
+                setBalance(prevBalance => prevBalance - amountNum);
+                setTransactions(prevTx => [newTransaction, ...prevTx]); // Ajouter la nouvelle transaction
+
+                // Afficher le toast de succès
+                setShowSuccessToast(true); 
+
+                return { 
+                    success: true, 
+                    message: `Virement de ${formatCurrency(amountNum)} à ${transferData.name} effectué avec succès.` 
+                };
+            };
+
+            // Si l'utilisateur n'est pas connecté, on affiche la page de Login
+            if (!isLoggedIn) {
+                return (
+                    <LoginPage 
+                        onLoginSuccess={handleLoginSuccess} 
+                        correctLogin={INITIAL_DATA.user} 
+                        bankName={INITIAL_DATA.bankName} 
+                    />
+                );
+            }
+
+            // Si l'utilisateur est connecté, on affiche le tableau de bord
+            return (
+                <div className="dashboard-container flex flex-col h-screen min-h-screen bg-slate-50 font-sans text-slate-700">
+                    <Header 
+                        userName={INITIAL_DATA.user.name} 
+                        bankName={INITIAL_DATA.bankName}
+                        onLogout={handleLogout}
+                        onToggleNotification={() => setShowNotification(!showNotification)}
+                        notificationActive={showNotification}
+                    />
+                    
+                    {showNotification && (
+                        <NotificationPanel message={INITIAL_DATA.notificationMessage} onClose={() => setShowNotification(false)} />
+                    )}
+                    
+                    {/* Affichage du Toast de succès - S'affiche après 3s de chargement */}
+                    {showSuccessToast && (
+                        <SuccessToast 
+                            message="Virement effectué avec succès !" 
+                            onClose={() => setShowSuccessToast(false)} 
+                        />
+                    )}
+
+                    <div className="flex flex-1 overflow-hidden relative">
+                        {/* Sidebar Navigation for Desktop / Bottom for Mobile */}
+                        <Navigation currentView={currentView} setCurrentView={setCurrentView} />
+
+                        <main className="main-content flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
+                            <div className="max-w-4xl mx-auto">
+                                {currentView === 'dashboard' && (
+                                    <DashboardView balance={balance} transactions={transactions} />
+                                )}
+                                {currentView === 'transfer' && (
+                                    <TransferView onTransfer={handleTransfer} />
+                                )}
+                                {currentView === 'card' && (
+                                    <CardView userName={INITIAL_DATA.user.name} />
+                                )}
+                                {currentView === 'loan' && (
+                                    <LoanView />
+                                )}
+                                {currentView === 'settings' && (
+                                    <SettingsView />
+                                )}
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            );
+        }
+
+        // Rendu de l'application dans l'élément root
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
